@@ -10,30 +10,27 @@ const port = 3000;
 
 const client = new ModbusRTU();
 
-// Modbus TCP sunucusuna bağlanma ve veri okuma
 function getModbusData() {
-    return client.connectTCP("10.0.10.11", { port: 502 })
+    return client.connectTCP("YOUR MODBUS IP ADDRESS", { port: 502 })
         .then(() => {
             client.setID(1);
             return client.readHoldingRegisters(0, 9);
         })
         .then((data) => {
-            return data.data; // Modbus'tan gelen veriyi döndür
+            return data.data;
         })
         .catch((err) => {
             console.error("Modbus hatası:", err);
-            return null; // Hata durumunda null döndür
+            return null;
         })
         .finally(() => {
-            client.close(); // Bağlantıyı kapat
+            client.close();
         });
 }
 
-// WebSocket bağlantısı üzerinden veriyi istemcilere gönderme
 wss.on('connection', (ws) => {
     console.log('Yeni bir WebSocket istemcisi bağlandı.');
 
-    // Her 5 saniyede bir Modbus verisini okuma ve gönderme
     const interval = setInterval(async () => {
         const modbusData = await getModbusData();
         if (modbusData) {
@@ -44,13 +41,11 @@ wss.on('connection', (ws) => {
         }
     }, 5000);
 
-    // Bağlantı kapatıldığında interval'i temizle
     ws.on('close', () => {
         clearInterval(interval);
     });
 });
 
-// Verılerın route'u
 app.get('/datas', (req, res) => {
     res.send(`
         <html>
@@ -75,7 +70,6 @@ app.get('/datas', (req, res) => {
     `);
 });
 
-// Sunucuyu başlatma
 server.listen(port, () => {
     console.log(`Sunucu http://localhost:${port} adresinde çalışıyor`);
 });
